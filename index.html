@@ -1094,28 +1094,28 @@
         }
       }
 
-      // Size the canvas backing buffer correctly.
-      // clientWidth/clientHeight are 0 here (layout not yet complete),
-      // so use window dimensions — the canvas is always fullscreen.
+      // Size the canvas backing buffer correctly at DPR resolution.
+      // Display sizing is handled by CSS (width:100%; height:100%) — no inline
+      // style needed, which prevents the size from getting locked at init time.
       const dpr = window.devicePixelRatio || 1;
-      canvas.width = Math.round(window.innerWidth * dpr);
+      canvas.width  = Math.round(window.innerWidth  * dpr);
       canvas.height = Math.round(window.innerHeight * dpr);
-      canvas.style.width = window.innerWidth + 'px';
-      canvas.style.height = window.innerHeight + 'px';
 
       // Keep the canvas sharp on window / orientation resize
       const resizeObserver = new ResizeObserver(() => {
         const newDpr = window.devicePixelRatio || 1;
-        const w = Math.round(canvasContainer.clientWidth * newDpr);
+        const w = Math.round(canvasContainer.clientWidth  * newDpr);
         const h = Math.round(canvasContainer.clientHeight * newDpr);
         if (w !== canvas.width || h !== canvas.height) {
-          canvas.width = w;
+          canvas.width  = w;
           canvas.height = h;
           // Reinitialise WebglPlot with the new size so it renders correctly
           if (connection.wglp) {
             connection.wglp = new WebglPlot(canvas);
-            if (connection.line0) connection.wglp.addLine(connection.line0);
+            if (connection.line0)   connection.wglp.addLine(connection.line0);
             if (connection.peakLine) connection.wglp.addLine(connection.peakLine);
+            // Re-apply theme colours after context recreation
+            if (window._applyThemeColors) window._applyThemeColors();
           }
         }
       });
