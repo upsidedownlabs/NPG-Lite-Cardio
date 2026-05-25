@@ -1536,6 +1536,7 @@
 
       // Animation loop — ECG plot + peak markers from Pan-Tompkins flags
       const PEAK_HALF_WIDTH = 7;  // ±7 samples (~28 ms) either side of each R-peak
+      const GAP_WIDTH = 24;       // blank samples ahead of write head (~48 ms sweep gap)
       const peakDisplay = new Float32Array(NUM_POINTS); // reused each frame
       function animate() {
         requestAnimationFrame(animate);
@@ -1555,28 +1556,32 @@
 
         // Pass 1: draw ECG line, build inverted-U (⊓) peak markers.
         // NaN → WebGL skips segments, so only the ⊓ shape renders (no connectors).
+        // Samples inside the sweep gap are set to NaN so the line breaks there,
+        // giving a clear visual marker of where new data is being written.
         peakDisplay.fill(NaN);
         const capHeight = 0.08;
+        const head = connection.sampleIndex;
         for (let i = 0; i < NUM_POINTS; i++) {
-          connection.line0.setY(i, connection.dataCh0[i] * scaleFactor);
-          if (connection.peakFlags[i]) {
-            const yScaled = connection.dataCh0[i] * scaleFactor;
+          const inGap = ((i - head + NUM_POINTS) % NUM_POINTS) < GAP_WIDTH;
+          connection.line0.setY(i, inGap ? NaN : d[i] * scaleFactor);
+          if (!inGap && connection.peakFlags[i]) {
+            const yScaled = d[i] * scaleFactor;
             if (yScaled > baselineScaled) {
-              const topY = yScaled;             // flat roof sits AT the R-peak tip
-              const botY = yScaled - capHeight; // legs hang downward from the tip
+              const topY = yScaled;
+              const botY = yScaled - capHeight;
               const lo = Math.max(0, i - PEAK_HALF_WIDTH);
               const hi = Math.min(NUM_POINTS - 1, i + PEAK_HALF_WIDTH);
-              // Left leg (botY → topY transition renders as near-vertical)
               peakDisplay[lo] = botY;
-              // Flat top
               for (let j = lo + 1; j < hi; j++) peakDisplay[j] = topY;
-              // Right leg (topY → botY transition renders as near-vertical)
               peakDisplay[hi] = botY;
             }
           }
         }
-        // Pass 2: write peak line
-        for (let i = 0; i < NUM_POINTS; i++) connection.peakLine.setY(i, peakDisplay[i]);
+        // Pass 2: write peak line (also blank within the sweep gap)
+        for (let i = 0; i < NUM_POINTS; i++) {
+          connection.peakLine.setY(i,
+            ((i - head + NUM_POINTS) % NUM_POINTS) < GAP_WIDTH ? NaN : peakDisplay[i]);
+        }
         connection.wglp.update();
       }
       animate();
