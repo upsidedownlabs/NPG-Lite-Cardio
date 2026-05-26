@@ -1283,8 +1283,45 @@
               filters: [{ namePrefix: "NPG" }],
               optionalServices: [SERVICE_UUID],
             });
+
+            // Reset UI if the device drops unexpectedly (out of range, powered off, etc.)
+            this.device.addEventListener('gattserverdisconnected', () => {
+              if (this.connected) {
+                console.log("Device unexpectedly disconnected.");
+                if (this.isRecording) this.stopRecording();
+                if (this._notifHandler) {
+                  try { this.dataChar.removeEventListener("characteristicvaluechanged", this._notifHandler); } catch (e) { /* ignore */ }
+                  this._notifHandler = null;
+                }
+                this.connected = false;
+                this.streaming = false;
+                this.startTime = null;
+                timeDisplay.textContent = "00:00";
+                this.updateButtonStates();
+                this.dataCh0.fill(0);
+                this.peakFlags.fill(0);
+                this.sampleIndex = 0;
+                this.panTompkins.reset();
+                bpmText.textContent = "-- BPM";
+                dropDisplay.style.display = 'none';
+              }
+            });
+
+            // gatt.connect() can resolve before the stack is fully ready,
+            // especially right after a recent disconnect. Retry with backoff.
             console.log("Connecting to GATT Server...");
-            this.server = await this.device.gatt.connect();
+            for (let attempt = 1; attempt <= 3; attempt++) {
+              try {
+                this.server = await this.device.gatt.connect();
+                if (this.server.connected) break;
+                throw new Error("Not connected after gatt.connect()");
+              } catch (e) {
+                if (attempt === 3) throw e;
+                console.log(`Connection attempt ${attempt} failed, retrying in ${attempt}s...`);
+                await new Promise(r => setTimeout(r, attempt * 1000));
+              }
+            }
+
             console.log("Getting Service...");
             const service = await this.server.getPrimaryService(SERVICE_UUID);
             console.log("Getting Control Characteristic...");
@@ -1337,6 +1374,12 @@
               console.log("Device disconnected.");
               this.startTime = null;
               timeDisplay.textContent = "00:00";
+              this.dataCh0.fill(0);
+              this.peakFlags.fill(0);
+              this.sampleIndex = 0;
+              this.panTompkins.reset();
+              bpmText.textContent = "-- BPM";
+              dropDisplay.style.display = 'none';
             }
           } catch (error) { console.log("Error disconnecting: " + error); }
         },
