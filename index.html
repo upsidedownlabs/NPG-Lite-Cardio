@@ -977,10 +977,7 @@
       const bpmText = document.createElement("span");
       bpmText.textContent = "-- BPM";
       bpmDisplay.appendChild(bpmText);
-      const dropDisplay = document.createElement("div");
-      dropDisplay.classList.add("overlay-metric");
-      dropDisplay.style.cssText = "display:none;color:var(--primary);background:rgba(255,56,56,0.18)";
-      overlayTop.append(bpmDisplay, dropDisplay);
+      overlayTop.append(bpmDisplay);
       overlay.appendChild(overlayTop);
       // Fullscreen theme toggle button
       const fullscreenThemeToggle = document.createElement("button");
@@ -1256,9 +1253,7 @@
             if (sampleCounter !== expected) {
               const skipped = (sampleCounter - expected + 256) % 256;
               this.droppedSamples += skipped;
-              dropDisplay.textContent = `⚠ ${this.droppedSamples} dropped`;
-              dropDisplay.style.display = '';
-              console.warn(`Sample gap: expected ${expected}, got ${sampleCounter} (${skipped} dropped, total ${this.droppedSamples})`);
+              console.log(`Samples lost: ${this.droppedSamples}`);
             }
             this.prevSampleCounter = sampleCounter;
           }
@@ -1344,7 +1339,6 @@
                 this.sampleIndex = 0;
                 this.panTompkins.reset();
                 bpmText.textContent = "-- BPM";
-                dropDisplay.style.display = 'none';
               }
             });
 
@@ -1418,7 +1412,6 @@
             this.sampleIndex = 0;
             this.panTompkins.reset();
             bpmText.textContent = "-- BPM";
-            dropDisplay.style.display = 'none';
             console.log("Device disconnected.");
           }
         },
@@ -1435,7 +1428,6 @@
             this.peakFlags.fill(0);
             this.prevSampleCounter = null;
             this.droppedSamples = 0;
-            dropDisplay.style.display = 'none';
             console.log("Sending START command...");
             await this.controlChar.writeValue(new TextEncoder().encode("START"));
             console.log("Starting notifications...");
