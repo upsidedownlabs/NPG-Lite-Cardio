@@ -1669,18 +1669,11 @@
       function animate() {
         requestAnimationFrame(animate);
         if (!connection.dataCh0) return;
-        // Single pass: max-abs + baseline sum — avoids per-frame array allocation
-        let maxCh0 = 0, baselineSum = 0;
         const d = connection.dataCh0;
-        for (let i = 0; i < NUM_POINTS; i++) {
-          const v = d[i];
-          baselineSum += v;
-          const av = Math.abs(v);
-          if (av > maxCh0) maxCh0 = av;
-        }
-        const currentMax = Math.max(maxCh0, 1e-6);
-        const scaleFactor = currentMax > 0.9 ? 0.9 / currentMax : 1;
-        const baselineScaled = (baselineSum / NUM_POINTS) * scaleFactor;
+        // Baseline for peak marker positioning only
+        let baselineSum = 0;
+        for (let i = 0; i < NUM_POINTS; i++) baselineSum += d[i];
+        const baseline = baselineSum / NUM_POINTS;
 
         // Pass 1: draw ECG line, build inverted-U (⊓) peak markers.
         // NaN → WebGL skips segments, so only the ⊓ shape renders (no connectors).
@@ -1691,12 +1684,12 @@
         const head = connection.sampleIndex;
         for (let i = 0; i < NUM_POINTS; i++) {
           const inGap = ((i - head + NUM_POINTS) % NUM_POINTS) < GAP_WIDTH;
-          connection.line0.setY(i, inGap ? NaN : d[i] * scaleFactor);
+          connection.line0.setY(i, inGap ? NaN : d[i]);
           if (!inGap && connection.peakFlags[i]) {
-            const yScaled = d[i] * scaleFactor;
-            if (yScaled > baselineScaled) {
-              const topY = yScaled;
-              const botY = yScaled - capHeight;
+            const y = d[i];
+            if (y > baseline) {
+              const topY = y;
+              const botY = y - capHeight;
               const lo = Math.max(0, i - PEAK_HALF_WIDTH);
               const hi = Math.min(NUM_POINTS - 1, i + PEAK_HALF_WIDTH);
               peakDisplay[lo] = botY;
