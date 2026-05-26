@@ -207,19 +207,11 @@
       box-sizing: border-box;
     }
 
-    /* Recording controls */
-    .recording-controls {
-      position: absolute;
-      top: 60px;
-      left: 15px;
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      pointer-events: auto;
-      z-index: 20;
-    }
-
     .recording-timer {
+      position: absolute;
+      bottom: 72px;
+      left: 50%;
+      transform: translateX(-50%);
       background-color: var(--primary);
       color: white;
       padding: 6px 12px;
@@ -230,6 +222,13 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      pointer-events: none;
+      z-index: 20;
+      /* Fixed width so changing digits don't resize the pill */
+      width: max-content;
+      min-width: 120px;
+      justify-content: center;
+      font-variant-numeric: tabular-nums;
     }
 
     .recording-dot {
@@ -351,37 +350,38 @@
       opacity: 0.5;
     }
 
-    /* === Toast notification === */
+    /* === Toast notification — pops up above the recordings button === */
     .rec-toast {
-      position: fixed;
-      top: 18px;
-      left: 18px;
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%) translateY(6px);
+      min-width: 220px;
+      max-width: 300px;
       background: rgba(20, 20, 30, 0.92);
       border: 1px solid rgba(255, 255, 255, 0.15);
       border-left: 3px solid #2ecc71;
       border-radius: 10px;
-      padding: 12px 16px;
+      padding: 10px 14px;
       color: #fff;
       font-size: 0.82rem;
       line-height: 1.6;
       z-index: 2000;
       backdrop-filter: blur(8px);
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-      /* Hidden via opacity+visibility so zero-width empty element
-         doesn't leak its border-left into the viewport */
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
       opacity: 0;
       visibility: hidden;
-      transform: translateX(-12px);
-      transition: opacity 0.35s ease, transform 0.35s ease,
-        visibility 0s linear 0.35s;
+      transition: opacity 0.3s ease, transform 0.3s ease,
+        visibility 0s linear 0.3s;
       pointer-events: none;
+      white-space: nowrap;
     }
 
     .rec-toast.show {
       opacity: 1;
       visibility: visible;
-      transform: translateX(0);
-      transition: opacity 0.35s ease, transform 0.35s ease,
+      transform: translateX(-50%) translateY(0);
+      transition: opacity 0.3s ease, transform 0.3s ease,
         visibility 0s linear 0s;
     }
 
@@ -1074,10 +1074,10 @@
       document.addEventListener("click", (e) => {
         if (!recordingsWrapper.contains(e.target)) dropup.classList.remove("open");
       });
-      // Toast notification element
+      // Toast notification element — anchored above the recordings button
       const recToast = document.createElement("div");
       recToast.classList.add("rec-toast");
-      document.body.appendChild(recToast);
+      recordingsWrapper.appendChild(recToast);
       let toastTimer = null;
       function showToast(html) {
         recToast.innerHTML = html;
@@ -1104,16 +1104,12 @@
       controlsOverlay.append(connectToggleBtn, recordBtnWrapper, recordingsWrapper, peaksToggleBtn);
       overlay.appendChild(controlsOverlay);
 
-      // Recording timer overlay
-      const recordingControls = document.createElement("div");
-      recordingControls.classList.add("recording-controls");
-      recordingControls.style.display = "none";
+      // Recording timer — absolutely positioned above controls, does not affect button layout
       const recordingTimer = document.createElement("div");
       recordingTimer.classList.add("recording-timer");
+      recordingTimer.style.display = "none";
       recordingTimer.innerHTML = '<div class="recording-dot"></div><span>00:00:00</span>';
-      recordingControls.appendChild(recordingTimer);
-
-      overlay.appendChild(recordingControls);
+      overlay.appendChild(recordingTimer);
 
       canvasContainer.appendChild(overlay);
 
@@ -1566,7 +1562,7 @@
 
           // Show recording timer with initial 00:00:00
           recordingTimer.querySelector('span').textContent = '00:00:00';
-          recordingControls.style.display = "flex";
+          recordingTimer.style.display = "flex";
 
           // Update timer every second
           this.recordingTimer = setInterval(() => {
@@ -1585,7 +1581,7 @@
         stopRecording: function () {
           this.isRecording = false;
           if (this.recordingData.length > 0) { this.flushRecordingData(); }
-          recordingControls.style.display = "none";
+          recordingTimer.style.display = "none";
           clearInterval(this.recordingTimer);
           this.recordingTimer = null;
           this.updateButtonStates();
