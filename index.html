@@ -209,6 +209,112 @@
       box-sizing: border-box;
     }
 
+    /* === Scrubber minimap (shown when paused) === */
+    .minimap-wrap {
+      position: absolute;
+      bottom: 68px;
+      left: 12px;
+      right: 12px;
+      height: 50px;
+      pointer-events: auto;
+      z-index: 10;
+      display: none;
+    }
+
+    .minimap-track {
+      position: absolute;
+      inset: 0;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.22);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--btn-border);
+      overflow: hidden;
+    }
+
+    [data-theme="light"] .minimap-track {
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    .minimap-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .minimap-viewport {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.18);
+      border-left: 1.5px solid rgba(255, 255, 255, 0.55);
+      border-right: 1.5px solid rgba(255, 255, 255, 0.55);
+      box-sizing: border-box;
+      cursor: grab;
+    }
+
+    [data-theme="light"] .minimap-viewport {
+      background: rgba(0, 0, 0, 0.12);
+      border-color: rgba(0, 0, 0, 0.45);
+    }
+
+    .minimap-viewport:active { cursor: grabbing; }
+
+    .minimap-offset-label {
+      position: absolute;
+      top: -20px;
+      font-size: 0.6rem;
+      font-weight: 600;
+      color: var(--text);
+      opacity: 0.55;
+      pointer-events: none;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .minimap-offset-label--left  { left: 0; }
+    .minimap-offset-label--right { right: 0; }
+
+    /* === Recording viewer header === */
+    .viewer-header {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--popup-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--btn-border);
+      border-radius: 10px;
+      padding: 6px 10px 6px 14px;
+      z-index: 30;
+      pointer-events: auto;
+      white-space: nowrap;
+    }
+
+    .viewer-filename {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--btn-text);
+    }
+
+    .viewer-duration {
+      font-size: 0.72rem;
+      color: var(--btn-text);
+      opacity: 0.6;
+    }
+
+    .viewer-close-btn {
+      width: 28px !important;
+      height: 28px !important;
+      border-radius: 6px !important;
+      flex-shrink: 0;
+    }
+
     .recording-timer {
       position: absolute;
       bottom: 72px;
@@ -414,9 +520,9 @@
     }
 
     .file-action-btn {
-      background: var(--primary);
-      border: none;
-      color: white;
+      background: transparent;
+      border: 1.5px solid var(--btn-border);
+      color: var(--btn-text);
       width: 28px;
       height: 28px;
       border-radius: 6px;
@@ -428,12 +534,10 @@
     }
 
     .file-action-btn:hover {
-      transform: scale(1.1);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    }
-
-    .file-action-btn.delete {
-      background: #e74c3c;
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+      transform: scale(1.05);
     }
 
     .no-files {
@@ -1210,6 +1314,21 @@
         clearTimeout(toastTimer);
         toastTimer = setTimeout(() => recToast.classList.remove("show"), 4500);
       }
+      // Pause/Resume display button — freezes the ECG render; stream continues unaffected
+      const pauseBtn = document.createElement("button");
+      pauseBtn.classList.add("btn");
+      pauseBtn.setAttribute("aria-label", "Pause display");
+      pauseBtn.title = "Pause";
+      pauseBtn.disabled = true;
+      pauseBtn.innerHTML = `
+        <svg class="icon-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="14" y="3" width="5" height="18" rx="1"/><rect x="5" y="3" width="5" height="18" rx="1"/>
+        </svg>
+        <svg class="icon-play" style="display:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/>
+        </svg>`;
+      pauseBtn.addEventListener("click", () => connection.toggleDisplayPause());
+
       // Toggle Peaks button — eye = peaks visible (click to hide), eye-off = peaks hidden (click to show)
       const peaksToggleBtn = document.createElement("button");
       peaksToggleBtn.classList.add("btn");
@@ -1226,20 +1345,6 @@
           <path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/>
           <path d="m2 2 20 20"/>
         </svg>`;
-      // Pause button
-      const pauseBtn = document.createElement("button");
-      pauseBtn.classList.add("btn");
-      pauseBtn.setAttribute("aria-label", "Pause display");
-      pauseBtn.title = "Pause display";
-      pauseBtn.innerHTML = `
-        <svg class="icon-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="14" y="3" width="5" height="18" rx="1"/><rect x="5" y="3" width="5" height="18" rx="1"/>
-        </svg>
-        <svg class="icon-play" style="display:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/>
-        </svg>`;
-      pauseBtn.addEventListener("click", () => connection.togglePause());
-
       controlsOverlay.append(connectToggleBtn, pauseBtn, recordBtnWrapper, recordingsWrapper, peaksToggleBtn);
       overlay.appendChild(controlsOverlay);
 
@@ -1249,6 +1354,109 @@
       recordingTimer.style.display = "none";
       recordingTimer.innerHTML = '<div class="recording-dot"></div><span>00:00:00</span>';
       overlay.appendChild(recordingTimer);
+
+      // Recording viewer header — shown when a saved recording is open
+      const viewerHeader = document.createElement('div');
+      viewerHeader.classList.add('viewer-header');
+      viewerHeader.style.display = 'none';
+      const viewerFilenameEl = document.createElement('span');
+      viewerFilenameEl.classList.add('viewer-filename');
+      const viewerDurationEl = document.createElement('span');
+      viewerDurationEl.classList.add('viewer-duration');
+      const viewerDownloadBtn = document.createElement('button');
+      viewerDownloadBtn.classList.add('btn', 'viewer-close-btn');
+      viewerDownloadBtn.setAttribute('aria-label', 'Download recording');
+      viewerDownloadBtn.title = 'Download CSV';
+      viewerDownloadBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+      viewerDownloadBtn.addEventListener('click', () => {
+        if (connection.viewerData) downloadFile(connection.viewerData.filename);
+      });
+      const viewerCloseBtn = document.createElement('button');
+      viewerCloseBtn.classList.add('btn', 'viewer-close-btn');
+      viewerCloseBtn.setAttribute('aria-label', 'Close recording viewer');
+      viewerCloseBtn.title = 'Close viewer';
+      viewerCloseBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
+      viewerHeader.append(viewerFilenameEl, viewerDurationEl, viewerDownloadBtn, viewerCloseBtn);
+      overlay.appendChild(viewerHeader);
+
+      // Scrubber minimap — shown when recording viewer is open
+      const minimapWrap = document.createElement("div");
+      minimapWrap.classList.add("minimap-wrap");
+      const minimapTrack = document.createElement("div");
+      minimapTrack.classList.add("minimap-track");
+      const minimapCanvas = document.createElement("canvas");
+      minimapCanvas.classList.add("minimap-canvas");
+      const minimapViewport = document.createElement("div");
+      minimapViewport.classList.add("minimap-viewport");
+      const minimapLabelLeft = document.createElement("div");
+      minimapLabelLeft.classList.add("minimap-offset-label", "minimap-offset-label--left");
+      minimapLabelLeft.textContent = "0 s";
+      const minimapLabelRight = document.createElement("div");
+      minimapLabelRight.classList.add("minimap-offset-label", "minimap-offset-label--right");
+      minimapLabelRight.textContent = '';
+      minimapTrack.appendChild(minimapCanvas);
+      minimapTrack.appendChild(minimapViewport);
+      minimapWrap.appendChild(minimapLabelLeft);
+      minimapWrap.appendChild(minimapLabelRight);
+      minimapWrap.appendChild(minimapTrack);
+      overlay.appendChild(minimapWrap);
+
+      // Size minimap canvas backing store (DPR-aware)
+      function sizeMinimap() {
+        const dpr = window.devicePixelRatio || 1;
+        minimapCanvas.width  = Math.round(minimapTrack.clientWidth  * dpr);
+        minimapCanvas.height = Math.round(minimapTrack.clientHeight * dpr);
+      }
+
+      // Draw compressed ECG waveform of the loaded recording onto minimap canvas
+      function drawMinimap() {
+        const vd = connection.viewerData;
+        if (!vd || vd.total === 0) return;
+        sizeMinimap();
+        const W = minimapCanvas.width, H = minimapCanvas.height;
+        const ctx = minimapCanvas.getContext('2d');
+        ctx.clearRect(0, 0, W, H);
+        const lc = getLineColor();
+        ctx.fillStyle = `rgba(${Math.round(lc[0]*255)},${Math.round(lc[1]*255)},${Math.round(lc[2]*255)},0.85)`;
+        const total = vd.total;
+        for (let x = 0; x < W; x++) {
+          const s0 = Math.floor((x / W) * total);
+          const s1 = Math.max(s0 + 1, Math.floor(((x + 1) / W) * total));
+          let mn = Infinity, mx = -Infinity;
+          for (let s = s0; s < Math.min(total, s1); s++) {
+            const v = vd.samples[s];
+            if (v < mn) mn = v; if (v > mx) mx = v;
+          }
+          if (mn === Infinity) continue;
+          const yTop = ((1 - mx) / 2) * H;
+          const yBot = ((1 - mn) / 2) * H;
+          ctx.fillRect(x, Math.max(0, yTop), 1, Math.max(1, yBot - yTop));
+        }
+        // Overlay R-peak markers as thin vertical lines
+        if (connection.peaksVisible && vd.peaks) {
+          const pc = getPeakColor();
+          ctx.fillStyle = `rgba(${Math.round(pc[0]*255)},${Math.round(pc[1]*255)},${Math.round(pc[2]*255)},0.85)`;
+          for (let x = 0; x < W; x++) {
+            const s0 = Math.floor((x / W) * total);
+            const s1 = Math.max(s0 + 1, Math.floor(((x + 1) / W) * total));
+            for (let s = s0; s < Math.min(total, s1); s++) {
+              if (vd.peaks[s]) { ctx.fillRect(x, 0, 1, H); break; }
+            }
+          }
+        }
+        updateMinimapViewport();
+      }
+
+      // Position the viewport block over the current window
+      function updateMinimapViewport() {
+        const vd = connection.viewerData;
+        if (!vd || vd.total === 0) return;
+        const trackW = minimapTrack.clientWidth;
+        const blockW = Math.min(trackW, (NUM_POINTS / vd.total) * trackW);
+        const blockL = (vd.offset / vd.total) * trackW;
+        minimapViewport.style.width = blockW + 'px';
+        minimapViewport.style.left  = Math.max(0, Math.min(trackW - blockW, blockL)) + 'px';
+      }
 
       canvasContainer.appendChild(overlay);
 
@@ -1354,8 +1562,10 @@
         // Packet format — set dynamically after connect based on device name
         singleSampleLen: 7,   // 3CH default: 2*3+1
         newPacketLen: 70,     // 3CH default: 10*7
+        displayPaused: false,     // true while live ECG display is frozen (stream continues)
         // Session recordings list (in-memory, for dropup)
-        paused: false,
+        viewerActive: false,      // true while a saved recording is being viewed
+        viewerData: null,         // { samples, peaks, total, offset, max, filename, duration }
         sessionRecordings: [],
         isRecording: false,
         recordingStartTime: null,
@@ -1380,15 +1590,15 @@
           recordBtn.title = isRec ? 'Stop recording' : 'Record';
           if (isRec) { recordBtn.classList.add("recording"); }
           else        { recordBtn.classList.remove("recording"); }
-          const isPaused = this.paused;
+          const isPaused = this.displayPaused;
           pauseBtn.querySelector('.icon-pause').style.display = isPaused ? 'none'  : 'block';
           pauseBtn.querySelector('.icon-play').style.display  = isPaused ? 'block' : 'none';
           pauseBtn.setAttribute('aria-label', isPaused ? 'Resume display' : 'Pause display');
           pauseBtn.title = isPaused ? 'Resume' : 'Pause';
           pauseBtn.disabled = !isConn;
         },
-        togglePause: function () {
-          this.paused = !this.paused;
+        toggleDisplayPause: function () {
+          this.displayPaused = !this.displayPaused;
           this.updateButtonStates();
         },
         normalizeSample: function (sample) {
@@ -1561,7 +1771,7 @@
             // Always reset state — even if any step above threw
             this.connected = false;
             this.streaming = false;
-            this.paused = false;
+            this.displayPaused = false;
             this.updateButtonStates();
             this.dataCh0.fill(0);
             this.peakFlags.fill(0);
@@ -1647,6 +1857,7 @@
             peaksToggleBtn.setAttribute('aria-label', 'Show peaks');
             peaksToggleBtn.title = 'Show peaks';
           }
+          if (this.viewerActive) { renderViewerFrame(); drawMinimap(); }
         },
         // Initialize Web Worker (inlined as Blob to work under file:// origin)
         // Open (and cache) the IndexedDB connection — no worker needed
@@ -1798,6 +2009,7 @@
         }
       }
       window._applyThemeColors = applyThemeColors;
+      window._redrawMinimap = () => { if (connection.viewerActive) { drawMinimap(); } };
 
       // Initialize ECG line with current-theme color
       const lc = getLineColor();
@@ -1810,13 +2022,52 @@
       connection.peakLine.arrangeX();
       connection.wglp.addLine(connection.peakLine);
 
+      // Render the current viewer window into WebGL lines
+      function renderViewerFrame() {
+        const vd = connection.viewerData;
+        if (!vd) return;
+        const snap  = vd.samples;
+        const peaks = vd.peaks;
+        const off   = vd.offset;
+        const total = vd.total;
+        let bSum = 0, bN = 0;
+        for (let i = 0; i < NUM_POINTS; i++) {
+          const si = off + i;
+          if (si < total) { bSum += snap[si]; bN++; }
+        }
+        const baseline = bN > 0 ? bSum / bN : 0;
+        peakDisplay.fill(NaN);
+        for (let i = 0; i < NUM_POINTS; i++) {
+          const si = off + i;
+          const y = si < total ? snap[si] : 0;
+          connection.line0.setY(i, y);
+          if (peaks && connection.peaksVisible && si < total && peaks[si] && y > baseline) {
+            const lo = Math.max(0, i - PEAK_HALF_WIDTH);
+            const hi = Math.min(NUM_POINTS - 1, i + PEAK_HALF_WIDTH);
+            peakDisplay[lo] = y - 0.08;
+            for (let j = lo + 1; j < hi; j++) peakDisplay[j] = y;
+            peakDisplay[hi] = y - 0.08;
+          }
+        }
+        for (let i = 0; i < NUM_POINTS; i++) {
+          connection.peakLine.setY(i, peakDisplay[i]);
+        }
+        connection.wglp.update();
+      }
+
       // Animation loop — ECG plot + peak markers from Pan-Tompkins flags
       const PEAK_HALF_WIDTH = 7;  // ±7 samples (~28 ms) either side of each R-peak
       const GAP_WIDTH = 24;       // blank samples ahead of write head (~48 ms sweep gap)
       const peakDisplay = new Float32Array(NUM_POINTS); // reused each frame
       function animate() {
         requestAnimationFrame(animate);
-        if (!connection.dataCh0 || connection.paused) return;
+        if (!connection.dataCh0) return;
+
+        if (connection.viewerActive || connection.displayPaused) {
+          connection.wglp.update(); // keep current frame alive
+          return;
+        }
+
         const d = connection.dataCh0;
         // Baseline for peak marker positioning only
         let baselineSum = 0;
@@ -1908,6 +2159,12 @@
           li.innerHTML = `
             <span class="file-name" title="${rec.filename}">${rec.filename}</span>
             <div class="file-actions">
+              <button class="file-action-btn view" data-filename="${rec.filename}" title="View recording">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
               <button class="file-action-btn download" data-filename="${rec.filename}" title="Download CSV">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -1923,6 +2180,9 @@
               </button>
             </div>
           `;
+          li.querySelector(".view").addEventListener("click", (e) => {
+            openRecordingViewer(e.currentTarget.dataset.filename);
+          });
           li.querySelector(".download").addEventListener("click", (e) => {
             downloadFile(e.currentTarget.dataset.filename);
           });
@@ -1944,6 +2204,63 @@
 
       peaksToggleBtn.addEventListener("click", connection.togglePeaks.bind(connection));
       connection.updateButtonStates();
+
+      // === Recording viewer navigation ===
+      const STEP_SAMPLES = Math.round(SAMPLE_RATE * 0.5); // 0.5 s per arrow step
+
+      function shiftViewer(deltaSamples) {
+        if (!connection.viewerActive || !connection.viewerData) return;
+        const vd = connection.viewerData;
+        vd.offset = Math.max(0, Math.min(vd.max, vd.offset + deltaSamples));
+        updateMinimapViewport();
+        renderViewerFrame();
+      }
+
+      // Keyboard: arrow keys
+      document.addEventListener("keydown", (e) => {
+        if (!connection.viewerActive) return;
+        if (e.key === "ArrowLeft")  { e.preventDefault(); shiftViewer(-STEP_SAMPLES); }
+        if (e.key === "ArrowRight") { e.preventDefault(); shiftViewer(+STEP_SAMPLES); }
+      });
+
+      // Mouse wheel + 2-finger trackpad
+      canvasContainer.addEventListener("wheel", (e) => {
+        if (!connection.viewerActive) return;
+        e.preventDefault();
+        const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+        shiftViewer(Math.round(delta * 2));
+      }, { passive: false });
+
+      // Minimap drag
+      let dragStartX = 0, dragStartOffset = 0;
+      minimapViewport.addEventListener("pointerdown", (e) => {
+        if (!connection.viewerActive) return;
+        e.preventDefault();
+        minimapViewport.setPointerCapture(e.pointerId);
+        dragStartX = e.clientX;
+        dragStartOffset = connection.viewerData.offset;
+      });
+      minimapViewport.addEventListener("pointermove", (e) => {
+        if (!e.buttons || !connection.viewerActive || !connection.viewerData) return;
+        const dx = e.clientX - dragStartX;
+        const trackW = minimapTrack.clientWidth;
+        const deltaSamples = Math.round((dx / trackW) * connection.viewerData.total);
+        connection.viewerData.offset = Math.max(0, Math.min(connection.viewerData.max, dragStartOffset + deltaSamples));
+        updateMinimapViewport();
+        renderViewerFrame();
+      });
+
+      // Click on track (not viewport) to jump — centers viewport on click point
+      minimapTrack.addEventListener("pointerdown", (e) => {
+        if (e.target === minimapViewport || !connection.viewerActive || !connection.viewerData) return;
+        const vd = connection.viewerData;
+        const rect = minimapTrack.getBoundingClientRect();
+        const ratio = (e.clientX - rect.left) / rect.width;
+        const newOffset = Math.round(ratio * vd.total - NUM_POINTS / 2);
+        vd.offset = Math.max(0, Math.min(vd.max, newOffset));
+        updateMinimapViewport();
+        renderViewerFrame();
+      });
 
       // File Manager functions
       function loadFileList() { } // kept for compat, not used
@@ -1997,6 +2314,76 @@
         }
       }
 
+      // Open a saved recording in the scrubber viewer
+      async function openRecordingViewer(filename) {
+        try {
+          await (connection._writeQueue || Promise.resolve());
+          const db = await connection.openRecordingDB();
+          const batches = await new Promise((res, rej) => {
+            const req = db.transaction('ECGBatches', 'readonly')
+              .objectStore('ECGBatches').index('filename').getAll(filename);
+            req.onsuccess = () => res(req.result);
+            req.onerror = () => rej(req.error);
+          });
+          let allRows;
+          if (batches.length > 0) {
+            batches.sort((a, b) => a.batchIndex - b.batchIndex);
+            allRows = batches.flatMap(b => b.rows);
+          } else {
+            const record = await new Promise((res, rej) => {
+              const req = db.transaction('ECGRecordings', 'readonly')
+                .objectStore('ECGRecordings').get(filename);
+              req.onsuccess = () => res(req.result);
+              req.onerror = () => rej(req.error);
+            });
+            if (!record || !Array.isArray(record.content)) { console.error('Viewer: no data for', filename); return; }
+            allRows = record.content;
+          }
+          const total = allRows.length;
+          if (total === 0) return;
+          const samples = new Float32Array(total);
+          for (let i = 0; i < total; i++) samples[i] = allRows[i][1];
+          // Re-run Pan-Tompkins offline to detect R-peaks in the recording
+          const detector = new PanTompkinsDetector(SAMPLE_RATE);
+          const peaks = new Uint8Array(total);
+          for (let i = 0; i < total; i++) {
+            const rT = detector.process(samples[i]);
+            if (rT !== null && rT < total) peaks[rT] = 1;
+          }
+          const durationSec = total / SAMPLE_RATE;
+          const mm = String(Math.floor(durationSec / 60)).padStart(2, '0');
+          const ss = String(Math.floor(durationSec % 60)).padStart(2, '0');
+          connection.viewerData = { samples, peaks, total, offset: 0, max: Math.max(0, total - NUM_POINTS), filename };
+          connection.viewerActive = true;
+          // Update viewer header
+          viewerFilenameEl.textContent = filename;
+          viewerDurationEl.textContent = `${mm}:${ss} · ${total.toLocaleString()} samples`;
+          viewerHeader.style.display = 'flex';
+          // Update minimap duration label and show minimap
+          minimapLabelRight.textContent = `${Math.round(durationSec)} s`;
+          minimapWrap.style.display = 'block';
+          dropup.classList.remove('open');
+          renderViewerFrame();
+          drawMinimap();
+        } catch (e) { console.error('Viewer failed:', e); }
+      }
+
+      function closeRecordingViewer() {
+        connection.viewerActive = false;
+        connection.viewerData = null;
+        viewerHeader.style.display = 'none';
+        minimapWrap.style.display = 'none';
+        minimapLabelRight.textContent = '';
+        // Clear WebGL lines so live view is clean when resumed
+        for (let i = 0; i < NUM_POINTS; i++) {
+          connection.line0.setY(i, 0);
+          connection.peakLine.setY(i, NaN);
+        }
+        connection.wglp.update();
+      }
+
+      viewerCloseBtn.addEventListener('click', closeRecordingViewer);
+
       async function deleteFile(filename) {
         try {
           const db = await connection.openRecordingDB();
@@ -2032,9 +2419,10 @@
         document.documentElement.setAttribute('data-theme', 'light');
         localStorage.setItem('theme', 'light');
       }
-      // Update WebGL line colors and grid to match new theme
+      // Update WebGL line colors, grid, and minimap to match new theme
       if (window._applyThemeColors) window._applyThemeColors();
       if (window._drawGrid) window._drawGrid();
+      if (window._redrawMinimap) window._redrawMinimap();
     }
 
     const themeToggle = document.querySelector('.theme-toggle');
