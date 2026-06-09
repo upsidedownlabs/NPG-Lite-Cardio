@@ -2174,30 +2174,11 @@
       }
       animate();
 
-      // BPM calculation and display update
-      const bpmWindow = [];
-      const windowSize = 5;
-      let displayedBPM = null;
-      const maxChangePerUpdate = 2;
+      // BPM display update — Pan-Tompkins already maintains an 8-beat RR moving average,
+      // which is the clinically standard smoothing (AAMI EC13 / IEC 60601-2-27). No
+      // additional windowing or slew limiting; display directly at 1 Hz.
       setInterval(() => {
-        const bpm = connection.computeBPM();
-        if (bpm !== null) {
-          bpmWindow.push(bpm);
-          if (bpmWindow.length > windowSize) { bpmWindow.shift(); }
-          const avgBPM = bpmWindow.reduce((a, b) => a + b, 0) / bpmWindow.length;
-          if (displayedBPM === null) { displayedBPM = avgBPM; }
-          else {
-            const diff = avgBPM - displayedBPM;
-            if (Math.abs(diff) > maxChangePerUpdate) {
-              displayedBPM += Math.sign(diff) * maxChangePerUpdate;
-            } else {
-              displayedBPM = avgBPM;
-            }
-          }
-          connection.updateBPMDisplay(displayedBPM);
-        } else {
-          connection.updateBPMDisplay(null);
-        }
+        connection.updateBPMDisplay(connection.computeBPM());
       }, 1000);
 
       // Attach event listeners to control buttons
