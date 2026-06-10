@@ -305,12 +305,16 @@
       z-index: 30;
       pointer-events: auto;
       white-space: nowrap;
+      overflow: hidden;
     }
 
     .viewer-filename {
       font-size: 0.78rem;
       font-weight: 600;
       color: var(--btn-text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
     }
 
     .viewer-duration {
@@ -709,96 +713,157 @@
     [data-theme="light"] .theme-icon-sun { display: none; }
     [data-theme="light"] .theme-icon-moon { display: block; }
 
-
-    /* === Mobile layout === */
-    /* Portrait: 2×2 button grid */
-    @media (max-width: 480px) {
-      .overlay-top {
-        top: 10px;
-        gap: 6px;
-      }
-
-      .overlay-metric {
-        padding: 4px 8px;
-        font-size: 0.7rem;
-      }
-
-      .overlay-bpm {
-        padding: 0 12px;
-        height: 36px;
-        font-size: 1rem;
-        gap: 3px;
-      }
-
-      .heart-icon {
-        width: 22px;
-        height: 22px;
-      }
-
-      .btn {
-        width: 36px;
-        height: 36px;
-      }
-
-      .theme-toggle,
-      .fullscreen-theme-toggle {
-        width: 28px;
-        height: 28px;
-      }
-
-      .fullscreen-btn {
-        width: 32px;
-        height: 32px;
-      }
-
-      .fullscreen-btn svg {
-        width: 16px;
-        height: 16px;
-      }
+    /* canvas-overlay: covers canvas fully, children position against this */
+    .canvas-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
     }
 
-    @media (orientation: portrait) and (max-width: 600px) {
-      .controls-overlay {
-        bottom: 15px;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
+    /* Viewer header: clip long filenames gracefully */
+    .viewer-header {
+      max-width: calc(100% - 32px);
+      box-sizing: border-box;
+    }
+    .viewer-filename {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    /* =======================================================
+       Responsive layout
+       ======================================================= */
+
+    /* ── Portrait phones  ≤ 600 px ──────────────────────── */
+    @media (max-width: 600px) and (orientation: portrait) {
+
+      /* Logo: slightly smaller */
+      .udl-logo img { height: 36px; }
+
+      /* BPM: align bottom edge with controls row */
+      .overlay-top { bottom: 14px; }
+      .overlay-bpm {
+        padding: 0 10px;
+        height: 32px;
+        font-size: 0.9rem;
+        gap: 4px;
+      }
+      .overlay-bpm span { min-width: 4em; }
+      .heart-icon { width: 18px; height: 18px; }
+
+      /* Utility buttons (info, fullscreen, theme): move to top-right */
+      .bottom-right-group {
+        top: 14px;
+        right: 14px;
+        bottom: auto;
         gap: 8px;
-        max-width: 320px;
+      }
+      .bottom-right-group .fullscreen-btn { display: flex; }
+      .fullscreen-theme-toggle     { width: 28px; height: 28px; }
+      .fullscreen-theme-toggle svg { width: 16px; height: 16px; }
+      .fullscreen-btn              { width: 28px; height: 28px; }
+      .fullscreen-btn svg          { width: 14px; height: 14px; }
+      .info-btn                    { width: 28px; height: 28px; font-size: 0.72rem; }
+
+      /* Controls: start after BPM (~117 px at left: 15 px → left: 130 px clears it).
+         32 px buttons × 6 + 4 px gaps × 5 = 212 px.
+         360 px phone: 360 − 130 − 14 = 216 px ≥ 212 px → 1 row. */
+      .controls-overlay {
+        bottom: 14px;
+        left: 130px;
+        right: 14px;
+        transform: none;
+        justify-content: center;
+        flex-wrap: nowrap;
+        gap: 4px;
+        padding: 0;
+        width: auto;
       }
 
-      /* Dropup: fixed so it can't clip off-screen */
+      /* Buttons: 32 px to guarantee single row */
+      .btn     { width: 32px; height: 32px; }
+      .btn svg { width: 16px; height: 16px; }
+      .btn img { width: 16px; height: 16px; }
+
+      /* Viewer header: below the top strip */
+      .viewer-header { top: 58px; }
+
+      /* Recording timer + minimap: above the single-row controls (32 px + 14 px = 46 px) */
+      .recording-timer { bottom: 58px; font-size: 0.82rem; }
+      .minimap-wrap    { bottom: 60px; }
+
+      /* Dropup: fixed so it never clips off-screen */
       .recordings-dropup {
         position: fixed;
-        bottom: 100px;
+        bottom: 66px;
         left: 10px;
         right: 10px;
         min-width: unset;
-        max-height: 50vh;
+        max-height: 45vh;
       }
+
+      /* Toast: full-width fixed pill */
+      .rec-toast {
+        position: fixed;
+        bottom: 66px;
+        left: 12px;
+        right: 12px;
+        transform: translateY(6px);
+        max-width: none;
+        white-space: normal;
+      }
+      .rec-toast.show { transform: translateY(0); }
+
+      /* Info panel: keep inside viewport */
+      .info-panel { right: 0; left: auto; min-width: 160px; }
     }
 
-    /* Landscape: single row, no wrap */
-    @media (orientation: landscape) and (max-height: 500px) {
-      .controls-overlay {
-        flex-wrap: nowrap;
-        bottom: 10px;
-        gap: 6px;
-      }
-
-      .btn {
-        padding: 5px 8px;
-        font-size: 11px;
-        min-width: 0;
-      }
+    /* ── Extra-small phones  ≤ 360 px ───────────────────── */
+    @media (max-width: 360px) and (orientation: portrait) {
+      /* 32 px + 3 px gap: 6×32 + 5×3 = 207 px fits in 320 − 120 − 14 = 186 px… still tight.
+         Reduce left offset since BPM font is smaller here. */
+      .controls-overlay { gap: 3px; left: 120px; }
+      .overlay-bpm  { font-size: 0.82rem; padding: 0 6px; height: 32px; }
+      .overlay-bpm span { min-width: 3.8em; }
+      .udl-logo img { height: 30px; }
     }
 
-    @media (max-width: 360px) {
-      .overlay-top {
-        flex-direction: column;
-        align-items: center;
-        gap: 4px;
-      }
+    /* ── Landscape phones  height ≤ 500 px ──────────────── */
+    @media (max-height: 500px) and (orientation: landscape) {
+      .udl-logo     { top: 8px; left: 10px; }
+      .udl-logo img { height: 28px; }
+
+      .overlay-top  { bottom: 8px; left: 10px; }
+      .overlay-bpm  { height: 32px; font-size: 0.82rem; padding: 0 8px; gap: 4px; }
+      .overlay-bpm span { min-width: 3.8em; }
+      .heart-icon   { width: 18px; height: 18px; }
+
+      .controls-overlay { bottom: 8px; gap: 5px; flex-wrap: nowrap; }
+      .btn          { width: 32px; height: 32px; }
+      .btn svg      { width: 15px; height: 15px; }
+      .btn img      { width: 15px; height: 15px; }
+
+      .bottom-right-group           { bottom: 8px; right: 10px; gap: 5px; }
+      .fullscreen-theme-toggle,
+      .fullscreen-btn               { width: 26px; height: 26px; }
+      .fullscreen-theme-toggle svg,
+      .fullscreen-btn svg           { width: 14px; height: 14px; }
+      .info-btn                     { width: 26px; height: 26px; font-size: 0.7rem; }
+
+      .recording-timer { bottom: 50px; font-size: 0.75rem; padding: 4px 10px; }
+      .minimap-wrap    { bottom: 50px; height: 36px; }
+
+      .viewer-header   { top: 6px; padding: 4px 8px 4px 10px; gap: 6px; }
+      .viewer-filename { font-size: 0.72rem; }
+      .viewer-duration { font-size: 0.66rem; }
+    }
+
+    /* ── Tablets portrait  601 – 900 px ─────────────────── */
+    @media (min-width: 601px) and (max-width: 900px) and (orientation: portrait) {
+      .udl-logo img     { height: 42px; }
+      .btn              { width: 38px; height: 38px; }
+      .controls-overlay { gap: 7px; }
     }
   </style>
 </head>
@@ -2401,17 +2466,21 @@
         shiftViewer(Math.round(delta * 2));
       }, { passive: false });
 
-      // Minimap drag
+      // Minimap drag — use explicit flag instead of e.buttons (unreliable on touch)
+      let minimapDragging = false, trackDragging = false;
       let dragStartX = 0, dragStartOffset = 0;
+
       minimapViewport.addEventListener("pointerdown", (e) => {
         if (!connection.viewerActive) return;
         e.preventDefault();
+        e.stopPropagation();
         minimapViewport.setPointerCapture(e.pointerId);
+        minimapDragging = true;
         dragStartX = e.clientX;
         dragStartOffset = connection.viewerData.offset;
       });
       minimapViewport.addEventListener("pointermove", (e) => {
-        if (!e.buttons || !connection.viewerActive || !connection.viewerData) return;
+        if (!minimapDragging || !connection.viewerActive || !connection.viewerData) return;
         const dx = e.clientX - dragStartX;
         const trackW = minimapTrack.clientWidth;
         const deltaSamples = Math.round((dx / trackW) * connection.viewerData.total);
@@ -2419,18 +2488,58 @@
         updateMinimapViewport();
         renderViewerFrame();
       });
+      minimapViewport.addEventListener("pointerup",     () => { minimapDragging = false; });
+      minimapViewport.addEventListener("pointercancel", () => { minimapDragging = false; });
 
-      // Click on track (not viewport) to jump — centers viewport on click point
+      // Click OR drag anywhere on the track — jump then drag continuously
       minimapTrack.addEventListener("pointerdown", (e) => {
         if (e.target === minimapViewport || !connection.viewerActive || !connection.viewerData) return;
+        e.preventDefault();
+        minimapTrack.setPointerCapture(e.pointerId);
+        trackDragging = true;
         const vd = connection.viewerData;
         const rect = minimapTrack.getBoundingClientRect();
         const ratio = (e.clientX - rect.left) / rect.width;
-        const newOffset = Math.round(ratio * vd.total - NUM_POINTS / 2);
-        vd.offset = Math.max(0, Math.min(vd.max, newOffset));
+        vd.offset = Math.max(0, Math.min(vd.max, Math.round(ratio * vd.total - NUM_POINTS / 2)));
+        dragStartX = e.clientX;
+        dragStartOffset = vd.offset;
         updateMinimapViewport();
         renderViewerFrame();
       });
+      minimapTrack.addEventListener("pointermove", (e) => {
+        if (!trackDragging || !connection.viewerActive || !connection.viewerData) return;
+        const dx = e.clientX - dragStartX;
+        const trackW = minimapTrack.clientWidth;
+        const deltaSamples = Math.round((dx / trackW) * connection.viewerData.total);
+        connection.viewerData.offset = Math.max(0, Math.min(connection.viewerData.max, dragStartOffset + deltaSamples));
+        updateMinimapViewport();
+        renderViewerFrame();
+      });
+      minimapTrack.addEventListener("pointerup",     () => { trackDragging = false; });
+      minimapTrack.addEventListener("pointercancel", () => { trackDragging = false; });
+
+      // Canvas touch swipe to scrub viewer (left = forward, right = back)
+      let swipeTouchId = null, swipePrevX = 0;
+      canvasContainer.addEventListener("touchstart", (e) => {
+        if (!connection.viewerActive) return;
+        swipeTouchId = e.changedTouches[0].identifier;
+        swipePrevX   = e.changedTouches[0].clientX;
+      }, { passive: true });
+      canvasContainer.addEventListener("touchmove", (e) => {
+        if (!connection.viewerActive || swipeTouchId === null || !connection.viewerData) return;
+        let t = null;
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === swipeTouchId) { t = e.changedTouches[i]; break; }
+        }
+        if (!t) return;
+        e.preventDefault();
+        const dx = t.clientX - swipePrevX;
+        swipePrevX = t.clientX;
+        // Scale swipe distance to recording length so full-screen swipe = full recording width
+        shiftViewer(Math.round(-dx * connection.viewerData.total / canvasContainer.clientWidth));
+      }, { passive: false });
+      canvasContainer.addEventListener("touchend",   () => { swipeTouchId = null; }, { passive: true });
+      canvasContainer.addEventListener("touchcancel",() => { swipeTouchId = null; }, { passive: true });
 
       // File Manager functions
       function loadFileList() { } // kept for compat, not used
