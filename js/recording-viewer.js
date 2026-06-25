@@ -200,6 +200,7 @@ async function openRecordingViewer(filename) {
       filename,
     };
     connection.viewerActive = true;
+    updateButtonStates();
 
     // Update viewer header
     connection.elements.viewerFilenameEl.textContent = filename;
@@ -222,6 +223,7 @@ async function openRecordingViewer(filename) {
 function closeRecordingViewer() {
   connection.viewerActive = false;
   connection.viewerData   = null;
+  updateButtonStates();
   connection.elements.viewerHeader.style.display    = 'none';
   connection.elements.minimapWrap.style.display     = 'none';
   connection.elements.minimapLabelRight.textContent = '';

@@ -153,6 +153,48 @@ function toggleRecording() {
   }
 }
 
+// On page load, read all ECGBatches from IndexedDB and restore them into
+// connection.sessionRecordings so recordings survive page reloads.
+async function loadRecordingsFromDB() {
+  try {
+    const db = await openRecordingDB();
+    const batches = await new Promise((res, rej) => {
+      const req = db.transaction('ECGBatches', 'readonly')
+        .objectStore('ECGBatches').getAll();
+      req.onsuccess = () => res(req.result);
+      req.onerror   = () => rej(req.error);
+    });
+
+    // Aggregate sample counts per filename
+    const fileMap = new Map(); // filename → total sample count
+    for (const batch of batches) {
+      const prev = fileMap.get(batch.filename) || 0;
+      fileMap.set(batch.filename, prev + (batch.rows ? batch.rows.length : 0));
+    }
+
+    // Convert to sorted list (oldest first, by embedded timestamp in filename)
+    const existing = new Set(connection.sessionRecordings.map(r => r.filename));
+    fileMap.forEach((totalSamples, filename) => {
+      if (existing.has(filename)) return; // already tracked (e.g. just stopped)
+      const secs = Math.round(totalSamples / SAMPLE_RATE);
+      const mm   = String(Math.floor(secs / 60)).padStart(2, '0');
+      const ss   = String(secs % 60).padStart(2, '0');
+      connection.sessionRecordings.push({
+        filename,
+        duration: `${mm}:${ss}`,
+        samples:  totalSamples,
+      });
+    });
+
+    // Sort by filename (timestamps embedded: ECG-YYYYMMDD-HHMMSS.csv)
+    connection.sessionRecordings.sort((a, b) => a.filename.localeCompare(b.filename));
+
+    if (fileMap.size > 0) refreshDropup();
+  } catch (e) {
+    console.error('loadRecordingsFromDB failed:', e);
+  }
+}
+
 // Delete all IDB data for a given filename (both the batch store and the legacy store).
 async function deleteFile(filename) {
   try {

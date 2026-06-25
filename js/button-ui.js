@@ -97,6 +97,12 @@ function createDevicePanel() {
     `<tr><td>Large box</td><td>${largeBox.toFixed(2)} s</td></tr>` +
     `<tr><td>Small box</td><td>${smallBox.toFixed(3)} s</td></tr>` +
     `<tr><td>Sample rate</td><td>${SAMPLE_RATE} Hz</td></tr>` +
+    `</table>` +
+    `<div class="info-panel-title" style="margin-top:10px">Signal filters</div>` +
+    `<table>` +
+    `<tr><td>Notch</td><td>48 – 52 Hz band-stop</td></tr>` +
+    `<tr><td>ECG low-pass</td><td>30 Hz cutoff</td></tr>` +
+    `<tr><td>DC removal</td><td>0.5 Hz high-pass</td></tr>` +
     `</table>`;
   infoBtn.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -431,6 +437,7 @@ function createDevicePanel() {
   initViewerControls(canvasContainer); // recording-viewer.js
 
   updateButtonStates();
+  loadRecordingsFromDB(); // recording.js — restore persisted recordings on page load
 
   // ════════════════════════════════════════════════════════════
   // 6. FULLSCREEN HELPER (local — only needs canvasContainer)
@@ -461,6 +468,7 @@ function updateButtonStates() {
   const isConn   = connection.connected;
   const isPaused = connection.displayPaused;
   const isRec    = connection.isRecording;
+  const isViewer = !!connection.viewerActive;
   const recTooShort = isRec && (Date.now() - connection.recordingStartTime) < MIN_RECORDING_MS;
 
   // Connect / play-pause button icons
@@ -471,6 +479,7 @@ function updateButtonStates() {
     connectToggleBtn.querySelector('.icon-play').style.display    = (isConn && isPaused)  ? 'block' : 'none';
     connectToggleBtn.setAttribute('aria-label', !isConn ? 'Connect' : isPaused ? 'Resume display' : 'Pause display');
     connectToggleBtn.title = !isConn ? 'Connect' : isPaused ? 'Resume' : 'Pause';
+    connectToggleBtn.disabled = isRec || isViewer;
   }
 
   // Disconnect button
@@ -484,13 +493,18 @@ function updateButtonStates() {
   // Find record button by its icon-record child
   document.querySelectorAll('.controls-overlay .btn').forEach(btn => {
     if (!btn.querySelector('.icon-record')) return;
-    btn.disabled = !isConn || recTooShort;
+    btn.disabled = !isConn || recTooShort || isViewer || isPaused;
     btn.querySelector('.icon-record').style.display = isRec ? 'none'  : 'block';
     btn.querySelector('.icon-stop').style.display   = isRec ? 'block' : 'none';
     btn.setAttribute('aria-label', isRec ? 'Stop recording' : 'Start recording');
     btn.title = recTooShort ? 'Minimum recording duration: 12 s' : isRec ? 'Stop recording' : 'Record';
     if (isRec) btn.classList.add("recording");
     else        btn.classList.remove("recording");
+  });
+
+  // View (eye) buttons in the recordings dropup — disabled while recording is active
+  document.querySelectorAll('.file-action-btn.view').forEach(btn => {
+    btn.disabled = isRec;
   });
 }
 

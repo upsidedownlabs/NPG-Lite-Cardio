@@ -580,6 +580,11 @@ canvas {
   border-color: var(--primary);
   color: #fff;
 }
+.file-action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 
 .no-files {
   text-align: center;
