@@ -195,6 +195,36 @@ async function loadRecordingsFromDB() {
   }
 }
 
+// Rename all IDB batch records from oldName to newName.
+// Reads all batches first, then deletes the old keys and re-inserts with the new filename.
+async function renameFile(oldName, newName) {
+  try {
+    const db = await openRecordingDB();
+    const batches = await new Promise((res, rej) => {
+      const req = db.transaction('ECGBatches', 'readonly')
+        .objectStore('ECGBatches').index('filename').getAll(IDBKeyRange.only(oldName));
+      req.onsuccess = () => res(req.result);
+      req.onerror   = () => rej(req.error);
+    });
+    if (!batches.length) return;
+    await new Promise((res, rej) => {
+      const tx = db.transaction(['ECGBatches', 'ECGRecordings'], 'readwrite');
+      tx.oncomplete = () => res();
+      tx.onerror    = () => rej(tx.error);
+      const batchStore = tx.objectStore('ECGBatches');
+      for (const batch of batches) {
+        batchStore.delete(batch.batchKey);
+        const newKey = `${newName}|${String(batch.batchIndex).padStart(8, '0')}`;
+        batchStore.put({ ...batch, batchKey: newKey, filename: newName });
+      }
+      tx.objectStore('ECGRecordings').delete(oldName);
+    });
+    console.log('Renamed:', oldName, '→', newName);
+  } catch (e) {
+    console.error('Rename failed:', e);
+  }
+}
+
 // Delete all IDB data for a given filename (both the batch store and the legacy store).
 async function deleteFile(filename) {
   try {

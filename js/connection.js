@@ -213,12 +213,23 @@ async function stopStream() {
 // Toggle between live-stream and paused state.
 // When paused: stream stops but device stays connected.
 // When resumed: stream restarts from scratch (filters reset via startStream).
+//
+// _streamBusy guard: rapid clicks would stack overlapping BLE calls
+// (startNotifications while stopNotifications is still running), which
+// deadlocks the WebBluetooth stack and crashes the browser tab.
 async function toggleDisplayPause() {
-  connection.displayPaused = !connection.displayPaused;
+  if (connection._streamBusy) return;
+  connection._streamBusy = true;
   updateButtonStates();
-  if (connection.displayPaused) {
-    await stopStream();
-  } else {
-    await startStream();
+  try {
+    connection.displayPaused = !connection.displayPaused;
+    if (connection.displayPaused) {
+      await stopStream();
+    } else {
+      await startStream();
+    }
+  } finally {
+    connection._streamBusy = false;
+    updateButtonStates();
   }
 }

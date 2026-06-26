@@ -352,7 +352,7 @@ canvas {
 
 .recording-timer {
   position: absolute;
-  bottom: 5.75rem;
+  bottom: 5.5rem;
   left: 50%;
   transform: translateX(-50%);
   background-color: var(--primary);
@@ -489,18 +489,25 @@ canvas {
 .recordings-dropup {
   position: absolute;
   bottom: calc(100% + 0.5rem);
-  left: 0;
+  left: 50%;
+  transform: translateX(-50%);
   background: var(--popup-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--btn-border);
   border-radius: 0.75rem;
   padding: 0.625rem;
-  min-width: 18.75rem;
-  max-height: 17.5rem;
-  overflow-y: auto;
+  min-width: 16rem;
+  max-height: 9rem;
+  overflow: hidden;
   display: none;
   z-index: 500;
+  transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Slide just enough to reveal the recording timer pill below (pill ≈ 2rem + 0.5rem gap) */
+.recordings-dropup.timer-active {
+  bottom: calc(100% + 3rem);
 }
 
 .recordings-dropup.open {
@@ -521,12 +528,15 @@ canvas {
   list-style: none;
   padding: 0;
   margin: 0;
+  overflow-y: auto;
+  max-height: 6rem;
 }
 
 .file-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.5rem;
   padding: 0.5rem 0.625rem;
   background: rgba(128, 128, 128, 0.08);
   margin-bottom: 0.375rem;
@@ -543,9 +553,19 @@ canvas {
   color: var(--text);
   font-size: 0.8rem;
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: text;
+  border-radius: 0.25rem;
+  outline: none;
+  padding: 0.125rem 0.25rem;
+  margin: -0.125rem -0.25rem;
+}
+.file-name:focus {
+  background: rgba(128, 128, 128, 0.15);
+  text-overflow: clip;
 }
 
 .file-actions {
@@ -557,9 +577,10 @@ canvas {
   background: transparent;
   border: 1.5px solid var(--btn-border);
   color: var(--btn-text);
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 0.375rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.3rem;
+  flex-shrink: 0;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -706,16 +727,16 @@ canvas {
   outline: none;
 }
 
-/* Center connect/play-pause button — 1.5× the normal btn size */
+/* Center connect/play-pause button — slightly larger than normal btns */
 .btn-connect-center {
-  width: 3.75rem;
-  height: 3.75rem;
+  width: 3.25rem;
+  height: 3.25rem;
   border-radius: 0.75rem;
 }
 .btn-connect-center svg,
 .btn-connect-center img {
-  width: 1.875rem;
-  height: 1.875rem;
+  width: 1.625rem;
+  height: 1.625rem;
 }
 
 /* Theme toggle & fullscreen-inside-fullscreen toggle */
@@ -859,7 +880,7 @@ canvas {
   .recording-timer { bottom: 4.625rem; font-size: 0.82rem; }
   .minimap-wrap    { bottom: 4.625rem; }
 
-  /* Dropup: fixed so it never clips off-screen */
+  /* Dropup: full-width fixed on narrow screens */
   .recordings-dropup {
     position: fixed;
     bottom: 4.625rem;
@@ -868,6 +889,8 @@ canvas {
     min-width: unset;
     max-height: 45vh;
   }
+  .recordings-dropup.timer-active { bottom: 7rem; }
+  .file-list { max-height: calc(45vh - 3.5rem); }
 
   /* Toast: full-width fixed pill */
   .rec-toast {
@@ -907,6 +930,7 @@ canvas {
   .recording-timer { bottom: 4.625rem; }
   .minimap-wrap    { bottom: 4.625rem; }
   .recordings-dropup { bottom: 4.625rem; }
+  .recordings-dropup.timer-active { bottom: 7rem; }
   .rec-toast { bottom: 4.625rem; }
   .overlay-bpm  { font-size: 0.82rem; padding: 0 0.375rem; height: 2rem; }
   .overlay-bpm span { min-width: 3.8em; }
@@ -945,6 +969,7 @@ canvas {
 
   /* controls_bottom(0.5rem) + connect_height(3rem) + clearance(0.75rem) */
   .recording-timer { bottom: 4.25rem; font-size: 0.75rem; padding: 0.25rem 0.625rem; }
+  .recordings-dropup.timer-active { bottom: 6.5rem; }
   .minimap-wrap    { bottom: 4.25rem; height: 2.25rem; }
 
   /* BPM(top 0.5 + height 2 = 2.5rem) + gap → viewer header */
@@ -957,6 +982,6 @@ canvas {
 @media (min-width: 601px) and (max-width: 900px) and (orientation: portrait) {
   .udl-logo img     { height: 2.625rem; }
   .btn              { width: 2.375rem; height: 2.375rem; }
-  .btn-connect-center { width: 3.5625rem; height: 3.5625rem; }
+  .btn-connect-center { width: 3.125rem; height: 3.125rem; }
   .controls-overlay { gap: 0.5625rem; }
 }

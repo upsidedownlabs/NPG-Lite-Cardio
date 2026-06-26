@@ -100,7 +100,7 @@ function createDevicePanel() {
     `</table>` +
     `<div class="info-panel-title" style="margin-top:10px">Signal filters</div>` +
     `<table>` +
-    `<tr><td>Notch</td><td>48 – 52 Hz band-stop</td></tr>` +
+    `<tr><td>Notch</td><td>50 Hz notch</td></tr>` +
     `<tr><td>ECG low-pass</td><td>30 Hz cutoff</td></tr>` +
     `<tr><td>DC removal</td><td>0.5 Hz high-pass</td></tr>` +
     `</table>`;
@@ -213,13 +213,12 @@ function createDevicePanel() {
   dropup.classList.add("recordings-dropup");
   dropup.innerHTML = '<div class="recordings-dropup-header">This session</div><ul class="file-list"></ul>';
   document.addEventListener("click", (e) => {
-    if (!recordingsWrapper.contains(e.target)) dropup.classList.remove("open");
+    if (!recordingsWrapper.contains(e.target) && !dropup.contains(e.target))
+      dropup.classList.remove("open");
   });
   const recToast = document.createElement("div");
   recToast.classList.add("rec-toast");
   recordingsWrapper.appendChild(fileManagerBtn);
-  recordingsWrapper.appendChild(dropup);
-  recordingsWrapper.appendChild(recToast);
 
   // Peaks toggle
   const peaksToggleBtn = document.createElement("button");
@@ -246,7 +245,11 @@ function createDevicePanel() {
   dcToggleBtn.innerHTML = `<img src="icons/dc-filter-icon.svg" alt="DC filter">`;
 
   // Order: recordings | record | connect/play-pause (center) | peaks | DC
+  // dropup and recToast are absolute-positioned children of controlsOverlay so they
+  // center on the full button row (left: 50% / translateX(-50%)), not just the recordings button.
   controlsOverlay.append(recordingsWrapper, recordBtnWrapper, connectToggleBtn, peaksToggleBtn, dcToggleBtn);
+  controlsOverlay.appendChild(dropup);
+  controlsOverlay.appendChild(recToast);
   overlay.appendChild(controlsOverlay);
 
   // ── Recording timer pill (above controls) ────────────────────────────────
@@ -371,6 +374,8 @@ function createDevicePanel() {
       minimapViewport,
       minimapTrack,
       dropup,
+      recToast,
+      fileManagerBtn,
       canvasContainer,
     },
   };
@@ -479,7 +484,7 @@ function updateButtonStates() {
     connectToggleBtn.querySelector('.icon-play').style.display    = (isConn && isPaused)  ? 'block' : 'none';
     connectToggleBtn.setAttribute('aria-label', !isConn ? 'Connect' : isPaused ? 'Resume display' : 'Pause display');
     connectToggleBtn.title = !isConn ? 'Connect' : isPaused ? 'Resume' : 'Pause';
-    connectToggleBtn.disabled = isRec || isViewer;
+    connectToggleBtn.disabled = isRec || isViewer || !!connection._streamBusy;
   }
 
   // Disconnect button
@@ -506,6 +511,16 @@ function updateButtonStates() {
   document.querySelectorAll('.file-action-btn.view').forEach(btn => {
     btn.disabled = isRec;
   });
+
+  // Recordings button — disabled while recording (can't browse files mid-recording)
+  if (connection.elements?.fileManagerBtn) {
+    connection.elements.fileManagerBtn.disabled = isRec;
+  }
+
+  // Slide dropup above the recording timer pill when both are visible
+  if (connection.elements?.dropup) {
+    connection.elements.dropup.classList.toggle('timer-active', isRec);
+  }
 }
 
 // Flash the heart icon for 200 ms on each detected R-peak.
@@ -533,7 +548,7 @@ function resetBPMDisplay() {
 let _toastTimer = null;
 function showToast(html) {
   if (!connection || !connection.elements) return;
-  const recToast = connection.elements.dropup.parentElement.querySelector('.rec-toast');
+  const recToast = connection.elements.recToast;
   if (!recToast) return;
   recToast.innerHTML = html;
   recToast.classList.add("show");
@@ -555,7 +570,7 @@ function refreshDropup() {
     const li = document.createElement("li");
     li.classList.add("file-item");
     li.innerHTML = `
-      <span class="file-name" title="${rec.filename}">${rec.filename}</span>
+      <span class="file-name" contenteditable="true" spellcheck="false" title="${rec.filename}">${rec.filename}</span>
       <div class="file-actions">
         <button class="file-action-btn view" data-filename="${rec.filename}" title="View recording">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -589,6 +604,27 @@ function refreshDropup() {
       deleteFile(fn);
       refreshDropup();
     });
+
+    // Inline rename — click the filename text to edit, blur/Enter to confirm
+    const nameEl = li.querySelector(".file-name");
+    nameEl.addEventListener("click", (e) => e.stopPropagation()); // don't close dropup
+    nameEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); nameEl.blur(); }
+      if (e.key === "Escape") { nameEl.textContent = rec.filename; nameEl.blur(); }
+    });
+    nameEl.addEventListener("blur", () => {
+      const newName = nameEl.textContent.trim();
+      if (!newName || newName === rec.filename) { nameEl.textContent = rec.filename; return; }
+      const finalName = newName.endsWith(".csv") ? newName : newName + ".csv";
+      renameFile(rec.filename, finalName);
+      rec.filename = finalName;
+      nameEl.textContent = finalName;
+      nameEl.title = finalName;
+      li.querySelector(".view").dataset.filename     = finalName;
+      li.querySelector(".download").dataset.filename = finalName;
+      li.querySelector(".delete").dataset.filename   = finalName;
+    });
+
     fileList.appendChild(li);
   });
 }
