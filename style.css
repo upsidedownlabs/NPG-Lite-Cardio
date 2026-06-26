@@ -872,14 +872,14 @@ canvas {
   .heart-icon { width: 1.125rem; height: 1.125rem; }
 
   /* Tool buttons: vertically centered with BPM bar (BPM top 1rem + height 2rem / 2 = 2rem) */
-  .bottom-right-group { top: 2rem; right: 0.875rem; gap: 0.25rem; }
-  .fullscreen-theme-toggle     { width: 2rem; height: 2rem; }
+  .bottom-right-group { top: 2rem; right: 0.875rem; gap: 0.375rem; }
+  .fullscreen-theme-toggle     { width: 2.25rem; height: 2.25rem; }
   .fullscreen-theme-toggle svg { width: 1.125rem; height: 1.125rem; }
-  .fullscreen-btn              { width: 2rem; height: 2rem; }
-  .fullscreen-btn svg          { width: 1rem; height: 1rem; }
-  .info-btn                    { width: 2rem; height: 2rem; font-size: 0.8rem; }
-  .bottom-right-group .btn     { width: 2rem; height: 2rem; }
-  .bottom-right-group .btn svg { width: 1rem; height: 1rem; }
+  .fullscreen-btn              { width: 2.25rem; height: 2.25rem; }
+  .fullscreen-btn svg          { width: 1.125rem; height: 1.125rem; }
+  .info-btn                    { width: 2.25rem; height: 2.25rem; font-size: 0.85rem; }
+  .bottom-right-group .btn     { width: 2.25rem; height: 2.25rem; }
+  .bottom-right-group .btn svg { width: 1.125rem; height: 1.125rem; }
 
   /* Controls: full-width spread across screen */
   .controls-overlay {
@@ -892,40 +892,40 @@ canvas {
     gap: 0;
   }
 
-  /* Normal buttons: match BPM bar height (2rem) */
-  .btn     { width: 2rem; height: 2rem; }
-  .btn svg { width: 1rem; height: 1rem; }
-  .btn img { width: 1rem; height: 1rem; }
+  /* Bottom control buttons */
+  .btn     { width: 2.25rem; height: 2.25rem; }
+  .btn svg { width: 1.125rem; height: 1.125rem; }
+  .btn img { width: 1.125rem; height: 1.125rem; }
 
-  /* Center connect button: 1.5× of 2rem */
-  .btn-connect-center              { width: 3rem; height: 3rem; border-radius: 0.625rem; }
+  /* Center connect button */
+  .btn-connect-center              { width: 3.25rem; height: 3.25rem; border-radius: 0.625rem; }
   .btn-connect-center svg,
-  .btn-connect-center img          { width: 1.5rem; height: 1.5rem; }
+  .btn-connect-center img          { width: 1.625rem; height: 1.625rem; }
 
   /* Viewer header: below BPM (BPM top 1rem + height 2rem = 3rem, add gap) */
   .viewer-header { top: 3.5rem; }
 
-  /* Recording timer + minimap: above tallest button (0.875 + 3rem + 0.75 = 4.625rem) */
-  .recording-timer { bottom: 4.625rem; font-size: 0.82rem; }
-  .minimap-wrap    { bottom: 4.625rem; }
+  /* Recording timer + minimap: above tallest button (0.875 + 3.25 + 0.75 = 4.875rem) */
+  .recording-timer { bottom: 4.875rem; font-size: 0.82rem; }
+  .minimap-wrap    { bottom: 4.875rem; }
 
   /* Dropup: full-width fixed on narrow screens */
   .recordings-dropup {
     position: fixed;
-    bottom: 4.625rem;
+    bottom: 4.875rem;
     left: 0.625rem;
     right: 0.625rem;
     transform: none;
     min-width: unset;
     max-height: 25vh;
   }
-  .recordings-dropup.timer-active { bottom: 7rem; }
+  .recordings-dropup.timer-active { bottom: 7.25rem; }
   .file-list { max-height: calc(25vh - 3.5rem); }
 
   /* Toast: full-width fixed pill */
   .rec-toast {
     position: fixed;
-    bottom: 4.625rem;
+    bottom: 4.875rem;
     left: 0.75rem;
     right: 0.75rem;
     transform: translateY(0.375rem);
@@ -942,26 +942,26 @@ canvas {
 @media (max-width: 360px) and (orientation: portrait) {
   /* Shrink top-group on very narrow screens so it doesn't crowd BPM */
   .bottom-right-group { gap: 0.125rem; }
-  .fullscreen-theme-toggle     { width: 1.75rem; height: 1.75rem; }
+  .fullscreen-theme-toggle     { width: 2rem; height: 2rem; }
   .fullscreen-theme-toggle svg { width: 1rem; height: 1rem; }
-  .fullscreen-btn              { width: 1.75rem; height: 1.75rem; }
-  .fullscreen-btn svg          { width: 0.875rem; height: 0.875rem; }
-  .info-btn                    { width: 1.75rem; height: 1.75rem; font-size: 0.72rem; }
-  .bottom-right-group .btn     { width: 1.75rem; height: 1.75rem; }
-  .bottom-right-group .btn svg { width: 0.875rem; height: 0.875rem; }
-  /* Match BPM bar height (2rem) on very small screens */
-  .btn     { width: 2rem; height: 2rem; }
-  .btn svg { width: 1rem; height: 1rem; }
-  .btn img { width: 1rem; height: 1rem; }
-  .btn-connect-center { width: 3rem; height: 3rem; }
+  .fullscreen-btn              { width: 2rem; height: 2rem; }
+  .fullscreen-btn svg          { width: 1rem; height: 1rem; }
+  .info-btn                    { width: 2rem; height: 2rem; font-size: 0.78rem; }
+  .bottom-right-group .btn     { width: 2rem; height: 2rem; }
+  .bottom-right-group .btn svg { width: 1rem; height: 1rem; }
+  /* Bottom control buttons */
+  .btn     { width: 2.125rem; height: 2.125rem; }
+  .btn svg { width: 1.0625rem; height: 1.0625rem; }
+  .btn img { width: 1.0625rem; height: 1.0625rem; }
+  .btn-connect-center { width: 3.125rem; height: 3.125rem; }
   .btn-connect-center svg,
   .btn-connect-center img { width: 1.5rem; height: 1.5rem; }
-  /* Recording timer + minimap: above tallest button (0.875 + 3rem + 0.75 = 4.625rem) */
-  .recording-timer { bottom: 4.625rem; }
-  .minimap-wrap    { bottom: 4.625rem; }
-  .recordings-dropup { bottom: 4.625rem; }
+  /* Recording timer + minimap: above tallest button (0.875 + 3.125 + 0.75 = 4.75rem) */
+  .recording-timer { bottom: 4.75rem; }
+  .minimap-wrap    { bottom: 4.75rem; }
+  .recordings-dropup { bottom: 4.75rem; }
   .recordings-dropup.timer-active { bottom: 7rem; }
-  .rec-toast { bottom: 4.625rem; }
+  .rec-toast { bottom: 4.75rem; }
   .overlay-bpm  { font-size: 0.82rem; padding: 0 0.375rem; height: 2rem; }
   .overlay-bpm span { min-width: 3.8em; }
   .udl-logo img { height: 1.875rem; }
