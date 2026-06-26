@@ -80,10 +80,11 @@ canvas {
   white-space: nowrap;
 }
 
-/* UDL logo — top left */
+/* UDL logo — top left, vertical center tracks BPM bar center (same formula as bottom-right-group) */
 .udl-logo {
   position: absolute;
-  top: 1rem;
+  top: 2.25rem;           /* = overlay-top(1rem) + overlay-bpm-height(2.5rem)/2 */
+  transform: translateY(-50%);
   left: 1rem;
   display: block;
   pointer-events: auto;
@@ -851,7 +852,8 @@ canvas {
 /* ── Portrait phones  ≤ 600 px ──────────────────────── */
 @media (max-width: 600px) and (orientation: portrait) {
 
-  /* Logo: compact mobile variant */
+  /* Logo: compact mobile variant, center = overlay-top(1rem) + bpm-height(2rem)/2 = 2rem */
+  .udl-logo { top: 2rem; }
   .udl-logo img { height: 2.25rem; }
   .udl-logo .logo-dark         { display: none; }
   .udl-logo .logo-dark-mobile  { display: block; }
@@ -967,7 +969,8 @@ canvas {
 
 /* ── Landscape phones  height ≤ 500 px ──────────────── */
 @media (max-height: 500px) and (orientation: landscape) {
-  .udl-logo     { top: 0.5rem; left: 0.625rem; }
+  /* Logo center = overlay-top(0.5rem) + bpm-height(2rem)/2 = 1.5rem */
+  .udl-logo     { top: 1.5rem; left: 0.625rem; }
   .udl-logo img { height: 1.75rem; }
 
   .overlay-top  { top: 0.5rem; }
