@@ -23,10 +23,10 @@ function createDevicePanel() {
   udlLogo.classList.add("udl-logo");
   udlLogo.href = "#";
   udlLogo.innerHTML = `
-    <img class="logo-dark"         src="icons/udl_logo_white.svg"         alt="Upside Down Labs">
-    <img class="logo-light"        src="icons/udl_logo_black.svg"         alt="Upside Down Labs">
-    <img class="logo-dark-mobile"  src="icons/udl_logo_white_mobile.svg"  alt="Upside Down Labs">
-    <img class="logo-light-mobile" src="icons/udl_logo_black_mobile.svg"  alt="Upside Down Labs">`;
+    <img class="logo-dark"         src="assets/udl_logo_white.svg"         alt="Upside Down Labs">
+    <img class="logo-light"        src="assets/udl_logo_black.svg"         alt="Upside Down Labs">
+    <img class="logo-dark-mobile"  src="assets/udl_logo_white_mobile.svg"  alt="Upside Down Labs">
+    <img class="logo-light-mobile" src="assets/udl_logo_black_mobile.svg"  alt="Upside Down Labs">`;
   overlay.appendChild(udlLogo);
 
   // BPM display
@@ -207,14 +207,14 @@ function createDevicePanel() {
   peaksToggleBtn.classList.add("btn");
   peaksToggleBtn.setAttribute("aria-label", "Hide peaks");
   peaksToggleBtn.title = "Hide peaks";
-  peaksToggleBtn.innerHTML = `<img class="icon-peaks" src="icons/peak-marker-icon.svg" alt="Peaks">`;
+  peaksToggleBtn.innerHTML = `<img class="icon-peaks" src="assets/peak-marker-icon.svg" alt="Peaks">`;
 
   // DC filter toggle
   const dcToggleBtn = document.createElement("button");
   dcToggleBtn.classList.add("btn");
   dcToggleBtn.setAttribute("aria-label", "Disable DC filter");
   dcToggleBtn.title = "Disable DC filter";
-  dcToggleBtn.innerHTML = `<img src="icons/dc-filter-icon.svg" alt="DC filter">`;
+  dcToggleBtn.innerHTML = `<img src="assets/dc-filter-icon.svg" alt="DC filter">`;
 
   // Order: recordings | record | connect/play-pause (center) | peaks | DC
   // dropup and recToast are absolute-positioned children of controlsOverlay so they
@@ -636,11 +636,11 @@ function toggleDCFilter() {
     if (!img) return;
     if (connection.dcEnabled) {
       connection.dc0.reset();
-      img.src = 'icons/dc-filter-icon.svg';
+      img.src = 'assets/dc-filter-icon.svg';
       btn.setAttribute('aria-label', 'Disable DC filter');
       btn.title = 'Disable DC filter';
     } else {
-      img.src = 'icons/dc-filter-off-icon.svg';
+      img.src = 'assets/dc-filter-off-icon.svg';
       btn.setAttribute('aria-label', 'Enable DC filter');
       btn.title = 'Enable DC filter';
     }
