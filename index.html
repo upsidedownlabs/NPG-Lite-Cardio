@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Cardiac Monitor - ECG Visualization</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <!-- main display container, built by createDevicePanel() -->
+  <div id="deviceContainer"></div>
+
+  <!-- hidden theme toggle (switched via the overlay button inside the canvas) -->
+  <button class="theme-toggle" aria-label="Toggle theme" style="display:none">
+    <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="4"/>
+      <path d="M12 2v2"/><path d="M12 20v2"/>
+      <path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/>
+      <path d="M2 12h2"/><path d="M20 12h2"/>
+      <path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+    </svg>
+    <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/>
+    </svg>
+  </button>
+
+  <!-- script load order matters — each file depends on those above it -->
+
+  <!-- Third-party -->
+  <script src="https://cdn.jsdelivr.net/npm/webgl-plot@0.7.1/dist/webglplot.umd.js"></script>
+
+  <!-- App config -->
+  <script src="js/config.js"></script>
+
+  <!-- Signal processing: filters -->
+  <script src="filters/notch-filter.js"></script>
+  <script src="filters/ecg-filter.js"></script>
+  <script src="filters/dc-filter.js"></script>
+
+  <!-- Signal processing: QRS detection -->
+  <script src="js/pan-tompkins.js"></script>
+
+  <!-- data path -->
+  <script src="js/packet-parser.js"></script>
+  <script src="js/signal-processor.js"></script>
+  <script src="js/connection.js"></script>
+
+  <!-- Storage -->
+  <script src="js/recording.js"></script>
+
+  <!-- Rendering -->
+  <script src="js/realtime-plot.js"></script>
+
+  <!-- Recording viewer + UI -->
+  <script src="js/recording-viewer.js"></script>
+  <script src="js/button-ui.js"></script>
+
+  <!-- Bootstrap -->
+  <script>
+    // Restore saved theme before first paint to avoid flash
+    if (localStorage.getItem('theme') === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+
+    // Mark touch devices so CSS hover suppression kicks in
+    window.addEventListener('touchstart', () => {
+      document.documentElement.classList.add('is-touch-device');
+    }, { once: true, passive: true });
+
+    // Wire the hidden theme-toggle button (outside canvas overlay)
+    const themeToggle = document.querySelector('.theme-toggle');
+    if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+
+    // Build the full UI
+    createDevicePanel();
+
+    // Remove fullscreen CSS class if the browser exits fullscreen externally
+    document.addEventListener("fullscreenchange", () => {
+      if (!document.fullscreenElement) {
+        document.querySelectorAll(".canvas-container.fullscreen")
+          .forEach(c => c.classList.remove("fullscreen"));
+      }
+    });
+  </script>
+</body>
+
+</html>
